@@ -10,6 +10,13 @@ const validationErrors = {
 }
 
 // 👇 Here you will create your schema.
+const schema = yup.object().shape({
+  fullName: yup.string().trim()
+    .min(3, validationErrors.fullNameTooShort)
+    .max(20, validationErrors.fullNameTooLong),
+  size: yup.string().trim()
+    .oneOf(['S', 'M', 'L'], validationErrors.sizeIncorrect)
+})
 
 // 👇 This array could help you construct your checkboxes using .map in the JSX.
 const toppings = [
@@ -39,9 +46,17 @@ export default function Form() {
   const [serverFailure, setServerFailure] = useState('')
   const [enableSubmit, setEnableSubmit] = useState(false)
 
+  useEffect(() => {
+    schema.isValid(formValues).then(isValid => setEnableSubmit(isValid))
+  }, [formValues])
+
   const onChange = evt => {
     let { name, value } = evt.target
     setFormValues({...formValues, [name]: value})
+
+    yup.reach(schema, name).validate(value)
+      .then(() => setValidationError({ ...validationError, [name]: '' }))
+      .catch((err) => setValidationError({ ...validationError, [name]: err.errors[0] }))
   }
 
   const onChangeToppings = evt => {
@@ -80,7 +95,7 @@ export default function Form() {
           <label htmlFor="fullName">Full Name</label><br />
           <input value={formValues.fullName} onChange={onChange} name='fullName' placeholder="Type full name" id="fullName" type="text" />
         </div>
-        {validationError.fullName && <div className='error'>Bad value</div>}
+        {validationError.fullName && <div className='error'>{validationError.fullName}</div>}
       </div>
 
       <div className="input-group">
@@ -94,7 +109,7 @@ export default function Form() {
             <option value="L">Large</option>
           </select>
         </div>
-        {validationError.size && <div className='error'>Bad value</div>}
+        {validationError.size && <div className='error'>{validationError.size}</div>}
       </div>
 
       <div className="input-group">
@@ -113,7 +128,7 @@ export default function Form() {
         })}
       </div>
       {/* 👇 Make sure the submit stays disabled until the form validates! */}
-      <input type="submit" />
+      <input type="submit" disabled={!enableSubmit} />
     </form>
   )
 }
