@@ -14,6 +14,7 @@ describe('Sprint 7 Challenge Learner Tests', () => {
     [4] sum('1', 2) // returns 3
     [5] sum('10', '3') // returns 13
   */
+ 
  it("pass valid numbers'", () => {
   expect(() => sum()).toThrowError("pass valid numbers")
  })
