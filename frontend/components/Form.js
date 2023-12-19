@@ -40,19 +40,40 @@ export default function Form() {
   const [enableSubmit, setEnableSubmit] = useState(false)
 
   const onChange = evt => {
-    let { type, name, value, checked } = evt.target
-    value = type == 'checkbox' ? checked : value
+    let { name, value } = evt.target
+    setFormValues({...formValues, [name]: value})
+  }
+
+  const onChangeToppings = evt => {
+    let { name, checked } = evt.target
+
+    if (!checked) {
+      setFormValues({...formValues, toppings: formValues.toppings.filter(topping => topping !== name)})
+    }
+    if (checked) {
+      setFormValues({...formValues, toppings: [...formValues.toppings, name]})
+    }
   }
 
   const onSubmit = evt => {
     evt.preventDefault()
+    axios.post('http://localhost:9009/api/order', formValues)
+      .then(res => {
+        setFormValues(getInitialValues())
+        setServerSuccess(res.data.message)
+        setServerFailure()
+      })
+      .catch(err => {
+        setServerFailure(err.response.data.message)
+        setServerSuccess()
+      })
   }
 
   return (
-    <form>
+    <form onSubmit={onSubmit}>
       <h2>Order Your Pizza</h2>
-      {serverSuccess && <div className='success'>Thank you for your order!</div>}
-      {serverFailure && <div className='failure'>Something went wrong</div>}
+      {serverSuccess && <div className='success'>{serverSuccess}</div>}
+      {serverFailure && <div className='failure'>{serverFailure}</div>}
 
       <div className="input-group">
         <div>
@@ -78,12 +99,12 @@ export default function Form() {
 
       <div className="input-group">
         {/* 👇 Maybe you could generate the checkboxes dynamically */}
-        {toppings.map(top => {
+        {toppings.map((top, idx) => {
           return (
           <label key={top.topping_id}>
             <input
-            checked={false}
-            onChange={onChange}
+            checked={!!formValues.toppings.find(topping => topping === top.topping_id)}
+            onChange={onChangeToppings}
             name={top.topping_id}
             type='checkbox'
             />
